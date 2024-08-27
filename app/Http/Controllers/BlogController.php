@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\BlogUpdated;
 use App\Http\Requests\BlogRequest;
 use App\Models\Blog;
+use App\Repositories\Blog\BlogRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -13,12 +14,19 @@ use Illuminate\Support\Facades\Log;
 
 class BlogController extends Controller
 {
+    protected $blogRepository;
+
+    public function __construct(BlogRepositoryInterface $blogRepository)
+    {
+        $this->blogRepository = $blogRepository;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $blogs = Blog::all();
+        $blogs = $this->blogRepository->all();
         return view('blog.index', compact('blogs'));
     }
 
@@ -36,17 +44,16 @@ class BlogController extends Controller
     public function store(BlogRequest $request)
     {
         $data = $request->validated();
+        $data['slug'] = Str::slug($data['title']);
+        $data['user_id'] = Auth::id();
 
         try {
-            DB::transaction(function () use ($request, $data) {
-                $data['slug'] = Str::slug($request->title);
-                $data['user_id'] = Auth::id();
-                Blog::create($data);
+            DB::transaction(function () use ($data) {
+                $this->blogRepository->create($data);
             });
 
             return redirect()->back()->with('success', 'Blog created successfully!');
         } catch (\Exception $e) {
-
             Log::error('Error creating blog:', ['error' => $e->getMessage()]);
             return redirect()->back()->withErrors('An error occurred while creating the blog.');
         }
@@ -57,7 +64,7 @@ class BlogController extends Controller
      */
     public function show(string $id)
     {
-        $blog = Blog::findOrFail($id);
+        $blog = $this->blogRepository->find($id);
         return view('blog.show', compact('blog'));
     }
 
@@ -66,7 +73,7 @@ class BlogController extends Controller
      */
     public function edit(string $id)
     {
-        $blog = Blog::findOrFail($id);
+        $blog = $this->blogRepository->find($id);
         return view('blog.edit', compact('blog'));
     }
 
@@ -75,17 +82,15 @@ class BlogController extends Controller
      */
     public function update(BlogRequest $request, string $id)
     {
-        $blog = Blog::findOrFail($id);
         $data = $request->validated();
+        $data['slug'] = Str::slug($data['title']);
 
         try {
-            DB::transaction(function () use ($blog, $data) {
-                $data['slug'] = Str::slug($data['title']);
-                // $data['user_id'] = Auth::id();
-                $blog->update($data);
+            DB::transaction(function () use ($id, $data) {
+                $this->blogRepository->update($id, $data);
 
-                // Fire the BlogUpdated event
-                event(new BlogUpdated($blog, Auth::user()));
+                // BlogUpdated event
+                event(new BlogUpdated($this->blogRepository->find($id), Auth::user()));
             });
 
             return redirect()->route('blog.index')->with('success', 'Blog updated successfully!');
@@ -101,12 +106,13 @@ class BlogController extends Controller
     public function destroy(string $id)
     {
         try {
-            $blog = Blog::findOrFail($id);
-            $blog->delete();
+            DB::transaction(function () use ($id) {
+                $this->blogRepository->delete($id);
+            });
 
             return redirect()->route('blog.index')->with('success', 'Blog deleted successfully!');
         } catch (\Exception $e) {
-
+            Log::error('Error deleting blog:', ['error' => $e->getMessage()]);
             return redirect()->back()->withErrors('An error occurred while deleting the blog.');
         }
     }

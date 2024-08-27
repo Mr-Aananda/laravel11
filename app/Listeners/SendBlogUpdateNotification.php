@@ -29,8 +29,12 @@ class SendBlogUpdateNotification implements ShouldQueue
         //Updated User
         $updatedBy = $event->updatedBy;
 
-        // Mail::to($createdUser->email)->queue(new BlogUpdatedNotification($event->blog, $updatedBy));
-        Mail::to($createdUser->email)->send(new BlogUpdatedNotification($event->blog, $updatedBy));
+        Mail::to($createdUser->email)->queue(new BlogUpdatedNotification($event->blog, $updatedBy));
+        // Mail::to($createdUser->email)->send(new BlogUpdatedNotification($event->blog, $updatedBy));
+
+        /******* Note ********/
+        // "send()" is immediate but can slow down your application's response time.
+        // "queue()" is asynchronous and better for performance, especially in high-load scenarios.
 
         // try {
         //     Mail::to($event->blog->user) // User A
