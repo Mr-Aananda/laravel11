@@ -8,4 +8,19 @@ use Illuminate\Database\Eloquent\Model;
 class Blog extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'title',
+        'details',
+        'slug',
+        'user_id'
+    ];
+
+    /**
+     * Get the user that owns the blog.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

@@ -2,18 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UserRequest;
 use App\Models\User;
+use App\Repositories\User\UserRepositoryInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
+    protected $userRepository;
+
+    public function __construct(UserRepositoryInterface $userRepository)
+    {
+        $this->userRepository = $userRepository;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $users = User::all();
-        return view('user.index',compact('users'));
+        $users = $this->userRepository->all();
+        return view('user.index', compact('users'));
     }
 
     /**
@@ -21,15 +33,27 @@ class UserController extends Controller
      */
     public function create()
     {
-        //
+        return view('user.create');
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(UserRequest $request)
     {
-        //
+        $request->validated();
+
+        try {
+            DB::transaction(function () use ($request) {
+                $data = $this->getUserData($request);
+                $this->userRepository->create($data);
+            });
+
+            return redirect()->back()->with('success', 'User created successfully!');
+        } catch (\Exception $e) {
+            Log::error('Error creating user:', ['error' => $e->getMessage()]);
+            return redirect()->back()->withErrors('An error occurred while creating the user.');
+        }
     }
 
     /**
@@ -37,7 +61,8 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $user = $this->userRepository->find($id);
+        return view('user.show', compact('user'));
     }
 
     /**
@@ -45,15 +70,28 @@ class UserController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $user = $this->userRepository->find($id);
+        return view('user.edit', compact('user'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UserRequest $request, string $id)
     {
-        //
+        $request->validated();
+
+        try {
+            DB::transaction(function () use ($request, $id) {
+                $data = $this->getUserData($request, 'update');
+                $this->userRepository->update($id, $data);
+            });
+
+            return redirect()->route('user.index')->with('success', 'User updated successfully!');
+        } catch (\Exception $e) {
+            Log::error('Error updating user:', ['error' => $e->getMessage()]);
+            return redirect()->back()->withErrors('An error occurred while updating the user.');
+        }
     }
 
     /**
@@ -61,6 +99,38 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $this->userRepository->delete($id);
+
+            return redirect()->route('user.index')->with('success', 'User deleted successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors('An error occurred while deleting the user.');
+        }
+    }
+
+    /**
+     * Get user data
+     * @param $request
+     * @return array
+     */
+    private function getUserData($request, $from = 'create'): array
+    {
+        $primary_data = [
+            'name' => $request->name,
+            'email' => $request->email,
+            'email_verified_at' => now(),
+        ];
+
+        if ($from === 'update') {
+            if ($request->password) {
+                $primary_data['password'] = Hash::make($request->password);
+            }
+            return $primary_data;
+        } else {
+            $create_date = [
+                'password' => Hash::make($request->password),
+            ];
+            return array_merge($primary_data, $create_date);
+        }
     }
 }

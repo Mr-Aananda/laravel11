@@ -11,7 +11,7 @@ class UserRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -21,8 +21,19 @@ class UserRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            //
+        $userId = $this->route('user') ? $this->route('user') : null;
+        $rules = [
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users,email,' . $userId,
+            'password' => [
+                'nullable',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
+            'password_confirmation' => 'nullable',
         ];
+
+        return $rules;
     }
 }
