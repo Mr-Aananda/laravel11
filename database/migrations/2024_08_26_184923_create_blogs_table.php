@@ -16,7 +16,14 @@ return new class extends Migration
             $table->foreignId('user_id')
                 ->constrained()
                 ->cascadeOnUpdate()
-                ->cascadeOnDelete();
+                ->cascadeOnDelete()
+                ->comment('Blog post creator/author ID');
+            $table->foreignId('updated_user_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete()
+                ->cascadeOnUpdate()
+                ->comment('Blog post updater ID, not the creator/author');
             $table->string('title');
             $table->string('slug')->unique();
             $table->longText('details');

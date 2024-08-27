@@ -39,7 +39,7 @@
                                 </tr>
                             </thead>
                             <tbody class="text-blue-gray-900">
-                                @foreach ($users as $index => $user)
+                                @forelse ($users as $index => $user)
                                     <tr class="border-b border-gray-300">
                                         <td class="py-3 px-4 border-r border-gray-300">{{ $index + 1 }}.</td>
                                         <td class="py-3 px-4 border-r border-gray-300">{{ $user->name }}</td>
@@ -64,12 +64,21 @@
                                             </form>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="py-3 px-4 text-center text-gray-500">
+                                            No users available.
+                                        </td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
 
                 </section>
+                <div class="mt-4">
+                    {{ $users->links() }}
+                </div>
             </div>
         </div>
     </div>

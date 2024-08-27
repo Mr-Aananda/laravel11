@@ -24,7 +24,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = $this->userRepository->all();
+        $users = $this->userRepository->paginate(25);
         return view('user.index', compact('users'));
     }
 
@@ -41,11 +41,10 @@ class UserController extends Controller
      */
     public function store(UserRequest $request)
     {
-        $request->validated();
+        $data = $this->userRepository->prepareUserData($request->validated());
 
         try {
-            DB::transaction(function () use ($request) {
-                $data = $this->getUserData($request);
+            DB::transaction(function () use ($data) {
                 $this->userRepository->create($data);
             });
 
@@ -79,11 +78,10 @@ class UserController extends Controller
      */
     public function update(UserRequest $request, string $id)
     {
-        $request->validated();
+        $data = $this->userRepository->prepareUserData($request->validated(), 'update');
 
         try {
-            DB::transaction(function () use ($request, $id) {
-                $data = $this->getUserData($request, 'update');
+            DB::transaction(function () use ($id, $data) {
                 $this->userRepository->update($id, $data);
             });
 

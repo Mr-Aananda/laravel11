@@ -33,6 +33,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the blogs updated by the user.
+     */
+    public function updatedBlogs(): HasMany
+    {
+        return $this->hasMany(Blog::class, 'updated_user_id');
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var array<int, string>

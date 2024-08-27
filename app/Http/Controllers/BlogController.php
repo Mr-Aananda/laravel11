@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\BlogUpdated;
 use App\Http\Requests\BlogRequest;
-use App\Models\Blog;
 use App\Repositories\Blog\BlogRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +24,7 @@ class BlogController extends Controller
      */
     public function index()
     {
-        $blogs = $this->blogRepository->all();
+        $blogs = $this->blogRepository->paginate(25);
         return view('blog.index', compact('blogs'));
     }
 
@@ -88,9 +86,6 @@ class BlogController extends Controller
         try {
             DB::transaction(function () use ($id, $data) {
                 $this->blogRepository->update($id, $data);
-
-                // BlogUpdated event
-                event(new BlogUpdated($this->blogRepository->find($id), Auth::user()));
             });
 
             return redirect()->route('blog.index')->with('success', 'Blog updated successfully!');

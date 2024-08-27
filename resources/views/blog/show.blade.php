@@ -38,9 +38,21 @@
                         </div>
 
                         <div>
+                            <h3 class="text-sm font-medium text-gray-700">Created By</h3>
+                            <p class="mt-1 text-gray-900">{{ $blog->user?->name }}</p>
+                        </div>
+
+                        <div>
                             <h3 class="text-sm font-medium text-gray-700">Created At</h3>
                             <p class="mt-1 text-gray-900">{{ $blog->created_at->format('F j, Y, g:i a') }}</p>
                         </div>
+
+                        @if ($blog->updatedBy?->name)
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-700">Created By</h3>
+                            <p class="mt-1 text-gray-900">{{ $blog->user?->name }}</p>
+                        </div>
+                        @endif
 
                         <div>
                             <h3 class="text-sm font-medium text-gray-700">Updated At</h3>
