@@ -22,18 +22,21 @@ class UserRequest extends FormRequest
     public function rules(): array
     {
         $userId = $this->route('user') ? $this->route('user') : null;
-        $rules = [
+
+        return [
             'name' => 'required|string',
-            'email' => 'required|email|unique:users,email,' . $userId,
+            'email' => [
+                'required',
+                'email',
+                'unique:users,email,' . $userId,
+            ],
             'password' => [
                 'nullable',
                 'string',
                 'min:8',
                 'confirmed',
             ],
-            'password_confirmation' => 'nullable',
+            'password_confirmation' => 'nullable|same:password',
         ];
-
-        return $rules;
     }
 }

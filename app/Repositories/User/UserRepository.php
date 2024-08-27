@@ -10,9 +10,7 @@ class UserRepository implements UserRepositoryInterface
 {
     public function all()
     {
-        return User::select('id','name','email')
-        ->orderBy('name', 'asc')
-        ->get();
+        return User::all();
     }
 
     public function find($id)
@@ -22,26 +20,19 @@ class UserRepository implements UserRepositoryInterface
 
     public function create(array $data)
     {
-        $data['password'] = Hash::make($data['password']);
         return User::create($data);
-
     }
 
     public function update($id, array $data)
     {
         $user = User::findOrFail($id);
-        if (isset($data['password']) && !empty($data['password'])) {
-            $data['password'] = Hash::make($data['password']);
-        } else {
-            unset($data['password']);
-        }
-        return $user->update($data);
+        $user->update($data);
+        return $user;
     }
 
     public function delete($id)
     {
         $user = User::findOrFail($id);
-        return $user->delete();
-
+        $user->delete();
     }
 }

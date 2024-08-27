@@ -104,6 +104,7 @@ class UserController extends Controller
 
             return redirect()->route('user.index')->with('success', 'User deleted successfully!');
         } catch (\Exception $e) {
+            Log::error('Error deleting user:', ['error' => $e->getMessage()]);
             return redirect()->back()->withErrors('An error occurred while deleting the user.');
         }
     }
@@ -127,10 +128,10 @@ class UserController extends Controller
             }
             return $primary_data;
         } else {
-            $create_date = [
+            $create_data = [
                 'password' => Hash::make($request->password),
             ];
-            return array_merge($primary_data, $create_date);
+            return array_merge($primary_data, $create_data);
         }
     }
 }
